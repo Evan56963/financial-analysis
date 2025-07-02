@@ -8,7 +8,7 @@ type NewsItem = {
 };
 
 export default function NewsPage() {
-  const [query, setQuery] = useState("金融");
+  const [query, setQuery] = useState("金融");// 查詢關鍵字
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -24,9 +24,9 @@ export default function NewsPage() {
     setLoading(false);
   };
   
-  // 預設查詢關鍵字
   useEffect(() => {
     fetchNews("金融");
+    setQuery(" ");
   }, []);
 
   const handleSubmit = (e: FormEvent) => {
@@ -36,8 +36,8 @@ export default function NewsPage() {
 
   // 新增重整按鈕的事件
   const handleReset = () => {
-    setQuery("金融");
     fetchNews("金融");
+    setQuery(" ");
   };
 
   return (
