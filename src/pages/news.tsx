@@ -47,7 +47,6 @@ export default function NewsPage() {
             type="text"
             className="input-field max-w-xs"
             placeholder="請輸入關鍵字查詢"
-            value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           <button type="submit" className="btn btn-primary">
