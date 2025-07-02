@@ -1,6 +1,7 @@
 import React, { useState, useEffect, FormEvent } from "react";
 import Head from "next/head";
 
+// 定義 NewsItem 型別
 type NewsItem = {
   title: string;
   link: string;
@@ -19,18 +20,24 @@ export default function NewsPage() {
       body: JSON.stringify({ query: q }),
     });
     const data = await res.json();
-    setNews(data);
+    setNews(Array.isArray(data) ? data : []);
     setLoading(false);
   };
-
+  
+  // 預設查詢關鍵字
   useEffect(() => {
-    fetchNews(query);
-    // eslint-disable-next-line
+    fetchNews("金融");
   }, []);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     fetchNews(query);
+  };
+
+  // 新增重整按鈕的事件
+  const handleReset = () => {
+    setQuery("金融");
+    fetchNews("金融");
   };
 
   return (
@@ -51,6 +58,13 @@ export default function NewsPage() {
           />
           <button type="submit" className="btn btn-primary">
             查詢
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={handleReset}
+          >
+            重整
           </button>
         </form>
       </div>
@@ -83,3 +97,7 @@ export default function NewsPage() {
     </div>
   );
 }
+
+  
+       
+              
