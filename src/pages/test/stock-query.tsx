@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import SearchBar from "@/components/Stock/SearchBar";
 import TradingCard from "@/components/Stock/TradingCard";
 import ChartContainer from "@/components/Stock/ChartContainer";
@@ -9,9 +9,28 @@ import { EmptyState, ErrorState } from "@/components/Stock/StateComponents";
 import { useStockData } from "@/hooks/useStockData";
 import { ChartBarIcon, TableCellsIcon } from "@heroicons/react/24/outline";
 import TechnicalAnalysisPanel from "@/components/Stock/TechnicalAnalysisPanel";
+import KLinePattern from "@/components/Stock/KLinePattern";
 import type { MarketType } from "@/components/Stock/SearchBar";
 
-type ViewType = "chart" | "table";
+// 型別與預設值集中
+const VIEW_OPTIONS = [
+  {
+    key: "chart",
+    label: "圖表",
+    icon: <ChartBarIcon className="h-5 w-5 inline-block align-text-bottom" />,
+  },
+  {
+    key: "table",
+    label: "數據",
+    icon: <TableCellsIcon className="h-5 w-5 inline-block align-text-bottom" />,
+  },
+] as const;
+type ViewType = (typeof VIEW_OPTIONS)[number]["key"];
+const DEFAULT_TIMEFRAME = "1d";
+const DEFAULT_PERIOD = "1Y";
+
+type Timeframe = "1d" | "1h";
+type DataPeriod = "YTD" | "1M" | "3M" | "6M" | "1Y" | "ALL";
 
 const StockAnalysisPage: React.FC = () => {
   const [queryState, setQueryState] = useState<{
@@ -22,10 +41,8 @@ const StockAnalysisPage: React.FC = () => {
     market: "market_stock_tw",
   });
   const [activeView, setActiveView] = useState<ViewType>("chart");
-  const [timeframe, setTimeframe] = useState<"1d" | "1h">("1d");
-  const [dataPeriod, setDataPeriod] = useState<
-    "YTD" | "1M" | "3M" | "6M" | "1Y" | "ALL"
-  >("1Y");
+  const [timeframe, setTimeframe] = useState<Timeframe>(DEFAULT_TIMEFRAME);
+  const [dataPeriod, setDataPeriod] = useState<DataPeriod>(DEFAULT_PERIOD);
 
   const {
     data,
@@ -38,6 +55,7 @@ const StockAnalysisPage: React.FC = () => {
     clearError,
   } = useStockData(queryState.symbol, timeframe, queryState.market);
 
+  // useCallback 依賴優化
   const handleSymbolChange = useCallback((symbol: string) => {
     setQueryState((q) => ({ ...q, symbol }));
   }, []);
@@ -53,37 +71,55 @@ const StockAnalysisPage: React.FC = () => {
     []
   );
 
-  const handleTimeframeChange = useCallback((tf: "1d" | "1h") => {
+  const handleTimeframeChange = useCallback((tf: Timeframe) => {
     setTimeframe(tf);
   }, []);
 
-  const handleDataPeriodChange = useCallback(
-    (period: "YTD" | "1M" | "3M" | "6M" | "1Y" | "ALL") => {
-      setDataPeriod(period);
-    },
-    []
+  const handleDataPeriodChange = useCallback((period: DataPeriod) => {
+    setDataPeriod(period);
+  }, []);
+
+  // 取最新一根K線
+  const latest = useMemo(
+    () => candlestickData?.slice(-1)[0],
+    [candlestickData]
   );
 
-  const views = useMemo(
-    () => [
-      {
-        key: "chart",
-        label: "圖表",
-        icon: (
-          <ChartBarIcon className="h-5 w-5 inline-block align-text-bottom" />
-        ),
-      },
-      {
-        key: "table",
-        label: "數據",
-        icon: (
-          <TableCellsIcon className="h-5 w-5 inline-block align-text-bottom" />
-        ),
-      },
-    ],
-    []
+  // KLinePattern 與 TechnicalAnalysisPanel 統一渲染
+  const renderPatternAndPanel = useCallback(
+    () => (
+      <>
+        <KLinePattern
+          symbol={queryState.symbol}
+          timeframe={timeframe}
+          market={queryState.market}
+        />
+        <TechnicalAnalysisPanel
+          technicalData={technicalData}
+          symbol={queryState.symbol}
+          timeframe={timeframe}
+          open_price={latest?.open}
+          high_price={latest?.high}
+          low_price={latest?.low}
+          close_price={latest?.close}
+          volume={latest?.volume}
+          loading={loading}
+          candlestickData={candlestickData}
+        />
+      </>
+    ),
+    [
+      latest,
+      candlestickData,
+      technicalData,
+      queryState.symbol,
+      timeframe,
+      loading,
+      queryState.market,
+    ]
   );
 
+  // renderContent 拆分
   const renderContent = useCallback(() => {
     if (loading) return <LoadingSpinner />;
     if (error)
@@ -102,12 +138,7 @@ const StockAnalysisPage: React.FC = () => {
               symbol={queryState.symbol}
               timeframe={timeframe}
             />
-            <TechnicalAnalysisPanel
-              technicalData={technicalData}
-              symbol={queryState.symbol}
-              timeframe={timeframe}
-              close_price={candlestickData?.slice(-1)[0]?.close} // 使用最新的收盤價
-            />
+            {renderPatternAndPanel()}
           </>
         );
       case "table":
@@ -118,11 +149,7 @@ const StockAnalysisPage: React.FC = () => {
               timeframe={timeframe}
               symbol={queryState.symbol}
             />
-            <TechnicalAnalysisPanel
-              technicalData={technicalData}
-              symbol={queryState.symbol}
-              timeframe={timeframe}
-            />
+            {renderPatternAndPanel()}
           </>
         );
       default:
@@ -140,6 +167,7 @@ const StockAnalysisPage: React.FC = () => {
     refetch,
     clearError,
     handleSymbolChange,
+    renderPatternAndPanel,
   ]);
 
   return (
@@ -175,7 +203,7 @@ const StockAnalysisPage: React.FC = () => {
           >
             <div className="bg-white rounded-lg p-1 shadow-sm border border-gray-200">
               <div className="flex space-x-1">
-                {views.map((view) => (
+                {VIEW_OPTIONS.map((view) => (
                   <motion.button
                     key={view.key}
                     onClick={() => setActiveView(view.key as ViewType)}
@@ -210,17 +238,7 @@ const StockAnalysisPage: React.FC = () => {
         ) : null}
 
         {/* 主要內容區域 */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeView}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
+        {renderContent()}
       </div>
     </div>
   );

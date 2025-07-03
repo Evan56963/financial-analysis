@@ -1,6 +1,7 @@
 import React, { useState, useEffect, FormEvent } from "react";
 import Head from "next/head";
 
+// 定義 NewsItem 型別
 type NewsItem = {
   title: string;
   link: string;
@@ -9,7 +10,7 @@ type NewsItem = {
 };
 
 export default function NewsPage() {
-  const [query, setQuery] = useState("金融");
+  const [query, setQuery] = useState("金融");// 查詢關鍵字
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +25,7 @@ export default function NewsPage() {
     setNews(Array.isArray(data) ? data : []);
     setLoading(false);
   };
-
+  
   useEffect(() => {
     fetchNews(query);
     setQuery(" ");
@@ -35,6 +36,8 @@ export default function NewsPage() {
     fetchNews(query);
   };
 
+
+  // 新增重整按鈕的事件
   const handleReset = () => {
     fetchNews("金融");
     setQuery(" ");
@@ -43,7 +46,6 @@ export default function NewsPage() {
   return (
     <div className="container-responsive py-8">
       <Head>
-        <title>即時金融新聞</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className="header text-center mb-8">
@@ -98,3 +100,7 @@ export default function NewsPage() {
     </div>
   );
 }
+
+  
+       
+              
