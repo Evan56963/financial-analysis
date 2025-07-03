@@ -27,6 +27,7 @@ export default function NewsPage() {
 
   useEffect(() => {
     fetchNews(query);
+    setQuery(" ");
   }, []);
 
   const handleSubmit = (e: FormEvent) => {
@@ -35,8 +36,8 @@ export default function NewsPage() {
   };
 
   const handleReset = () => {
-    setQuery("金融");
     fetchNews("金融");
+    setQuery(" ");
   };
 
   return (
@@ -53,7 +54,6 @@ export default function NewsPage() {
             type="text"
             className="input-field max-w-xs"
             placeholder="請輸入關鍵字查詢"
-            value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           <button type="submit" className="btn btn-primary">
