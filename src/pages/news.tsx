@@ -43,7 +43,6 @@ export default function NewsPage() {
   return (
     <div className="container-responsive py-8">
       <Head>
-        <title>即時金融新聞</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <div className="header text-center mb-8">
